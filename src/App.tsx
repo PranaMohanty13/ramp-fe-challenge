@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
 import { InputSelect } from "./components/InputSelect"
 import { Instructions } from "./components/Instructions"
 import { Transactions } from "./components/Transactions"
@@ -12,6 +12,7 @@ export function App() {
   const { data: employees, loading: loadingEmployees, ...employeeUtils } = useEmployees()
   const { data: paginatedTransactions, ...paginatedTransactionsUtils } = usePaginatedTransactions()
   const { data: transactionsByEmployee, ...transactionsByEmployeeUtils } = useTransactionsByEmployee()
+  const [isFilteredByEmployee, setIsFilteredByEmployee] = useState(false)
 
   const transactions = useMemo(
     () => paginatedTransactions?.data ?? transactionsByEmployee ?? null,
@@ -62,8 +63,10 @@ export function App() {
             }
 
             if (newValue.id === EMPTY_EMPLOYEE.id) {
+              setIsFilteredByEmployee(false)
               await loadAllTransactions()
             } else {
+              setIsFilteredByEmployee(true)
               await loadTransactionsByEmployee(newValue.id)
             }
           }}
@@ -74,17 +77,19 @@ export function App() {
         <div className="RampGrid">
           <Transactions transactions={transactions} />
 
-          {transactions !== null && (
-            <button
-              className="RampButton"
-              disabled={paginatedTransactionsUtils.loading}
-              onClick={async () => {
-                await loadAllTransactions()
-              }}
-            >
-              View More
-            </button>
-          )}
+          {transactions !== null &&
+            !isFilteredByEmployee &&
+            paginatedTransactions?.nextPage !== null && (
+              <button
+                className="RampButton"
+                disabled={paginatedTransactionsUtils.loading}
+                onClick={async () => {
+                  await loadAllTransactions()
+                }}
+              >
+                View More
+              </button>
+            )}
         </div>
       </main>
     </Fragment>
